@@ -1,22 +1,32 @@
-var createError = require('http-errors');
-var express = require('express');
-var cors = require('cors');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
+let createError = require('http-errors');
+let express = require('express');
+let cors = require('cors');
+let path = require('path');
+let cookieParser = require('cookie-parser');
+let logger = require('morgan');
+let rfs = require('rotating-file-stream') // version 2.x
 
-var indexRouter = require('./routes/index');
+let indexRouter = require('./routes/index');
 
-var config = require('config');
+let config = require('config');
 const port = config.get('static.port');
-var app = express();
+let app = express();
 app.use(cors());  //CORS Enable for all route
 
 //set the jade template engine
 // app.set('views', path.join(__dirname, 'views'));
 
+// create a rotating write stream
+let accessLogStream = rfs.createStream('logger.log', {
+  interval: '1d', // rotate daily
+  path: path.join(__dirname, 'log')
+});
+ 
+// setup the logger
+app.use(logger('combined', { stream: accessLogStream }));
 
-app.use(logger('dev'));
+
+app.use(logger('dev')); // Log on terminal
 app.use(express.json());
 app.use(express.urlencoded({
   extended: false
